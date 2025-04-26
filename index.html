@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>PES Ligi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 14px; }
+    input[type="number"] { width: 50px; padding: 5px; margin: 5px; }
+    button { padding: 8px 16px; margin-top: 10px; }
+    h1, h2 { font-size: 20px; }
+    #matchHistory { margin-top: 30px; background: white; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .match-entry { margin-bottom: 8px; font-size: 14px; }
+    @media (max-width: 600px) {
+      table, th, td { font-size: 12px; }
+      input[type="number"] { width: 40px; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>PES Mini Ligi</h1>
+
+<h2>Sıradaki Maç:</h2>
+<p id="currentMatch">Mehmetcan vs Ahmet</p>
+
+<div>
+  <label id="player1Label">Mehmetcan</label>
+  <input type="number" id="score1" min="0">
+  <span>-</span>
+  <input type="number" id="score2" min="0">
+  <label id="player2Label">Ahmet</label>
+  <br>
+  <button onclick="submitScore()">Skoru Kaydet</button>
+</div>
+
+<h2>Lig Tablosu</h2>
+<table id="leagueTable">
+  <thead>
+    <tr>
+      <th>Oyuncu</th>
+      <th>O</th>
+      <th>G</th>
+      <th>B</th>
+      <th>M</th>
+      <th>AG</th>
+      <th>YG</th>
+      <th>AV</th>
+      <th>P</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<h2>Maç Geçmişi</h2>
+<div id="matchHistory"></div>
+
+<script>
+const players = ['Ahmet', 'Mehmetcan', 'İskender'];
+let matches = [
+  ['Mehmetcan', 'Ahmet'],
+  ['Ahmet', 'İskender'],
+  ['İskender', 'Mehmetcan']
+];
+let matchIndex = 0;
+let history = [];
+
+let stats = {
+  'Ahmet':      { O:0, G:0, B:0, M:0, AG:0, YG:0 },
+  'Mehmetcan':  { O:0, G:0, B:0, M:0, AG:0, YG:0 },
+  'İskender':   { O:0, G:0, B:0, M:0, AG:0, YG:0 },
+};
+
+function updateTable() {
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = '';
+  players.forEach(p => {
+    let s = stats[p];
+    let AV = s.AG - s.YG;
+    let P = s.G * 3 + s.B;
+    tbody.innerHTML += `
+      <tr>
+        <td>${p}</td>
+        <td>${s.O}</td>
+        <td>${s.G}</td>
+        <td>${s.B}</td>
+        <td>${s.M}</td>
+        <td>${s.AG}</td>
+        <td>${s.YG}</td>
+        <td>${AV}</td>
+        <td>${P}</td>
+      </tr>
+    `;
+  });
+}
+
+function updateHistory() {
+  const div = document.getElementById("matchHistory");
+  div.innerHTML = '';
+  history.slice().reverse().forEach(h => {
+    div.innerHTML += `<div class="match-entry">${h}</div>`;
+  });
+}
+
+function submitScore() {
+  const p1 = matches[matchIndex][0];
+  const p2 = matches[matchIndex][1];
+  const score1 = parseInt(document.getElementById("score1").value);
+  const score2 = parseInt(document.getElementById("score2").value);
+  if (isNaN(score1) || isNaN(score2)) return alert("Lütfen her iki skoru da girin.");
+
+  stats[p1].O++; stats[p2].O++;
+  stats[p1].AG += score1; stats[p1].YG += score2;
+  stats[p2].AG += score2; stats[p2].YG += score1;
+
+  if (score1 > score2) { stats[p1].G++; stats[p2].M++; }
+  else if (score2 > score1) { stats[p2].G++; stats[p1].M++; }
+  else { stats[p1].B++; stats[p2].B++; }
+
+  history.push(`${p1} ${score1} - ${score2} ${p2}`);
+
+  // Temizle
+  document.getElementById("score1").value = '';
+  document.getElementById("score2").value = '';
+
+  // Yeni maç
+  matchIndex = (matchIndex + 1) % matches.length;
+  const next = matches[matchIndex];
+  document.getElementById("currentMatch").innerText = `${next[0]} vs ${next[1]}`;
+  document.getElementById("player1Label").innerText = next[0];
+  document.getElementById("player2Label").innerText = next[1];
+
+  updateTable();
+  updateHistory();
+}
+
+updateTable();
+</script>
+
+</body>
+</html>
