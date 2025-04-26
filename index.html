@@ -9,10 +9,19 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 14px; }
     input[type="number"] { width: 50px; padding: 5px; margin: 5px; }
-    button { padding: 8px 16px; margin-top: 10px; }
+    button { padding: 8px 16px; margin-top: 10px; background-color: #4CAF50; color: white; font-size: 14px; border: none; cursor: pointer; }
+    button:hover { background-color: #45a049; }
     h1, h2 { font-size: 20px; }
     #matchHistory { margin-top: 30px; background: white; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
     .match-entry { margin-bottom: 8px; font-size: 14px; }
+
+    /* Renkli Sıralama: Şampiyonlar Ligi benzeri */
+    .first { background-color: #FFD700; color: black; font-weight: bold; }
+    .second { background-color: #C0C0C0; color: black; font-weight: bold; }
+    .third { background-color: #cd7f32; color: white; font-weight: bold; }
+    .fourth { background-color: #E4E4E4; color: black; font-weight: bold; }
+    .other { background-color: #f1f1f1; color: black; }
+
     @media (max-width: 600px) {
       table, th, td { font-size: 12px; }
       input[type="number"] { width: 40px; }
@@ -66,23 +75,46 @@ let matches = [
   ['İskender', 'Mehmetcan']
 ];
 let matchIndex = 0;
-let history = [];
+let history = [];  
 
 let stats = {
-  'Ahmet':      { O:0, G:0, B:0, M:0, AG:0, YG:0 },
-  'Mehmetcan':  { O:0, G:0, B:0, M:0, AG:0, YG:0 },
-  'İskender':   { O:0, G:0, B:0, M:0, AG:0, YG:0 },
+  'Ahmet':      { O: 0, G: 0, B: 0, M: 0, AG: 0, YG: 0 },
+  'Mehmetcan':  { O: 0, G: 0, B: 0, M: 0, AG: 0, YG: 0 },
+  'İskender':   { O: 0, G: 0, B: 0, M: 0, AG: 0, YG: 0 }
 };
 
 function updateTable() {
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = '';
-  players.forEach(p => {
+
+  // Sıralama: önce puan, sonra averaj
+  const sorted = players.slice().sort((a, b) => {
+    const aStats = stats[a];
+    const bStats = stats[b];
+    const aPoints = aStats.G * 3 + aStats.B;
+    const bPoints = bStats.G * 3 + bStats.B;
+    const aAvg = aStats.AG - aStats.YG;
+    const bAvg = bStats.AG - bStats.YG;
+
+    if (bPoints !== aPoints) return bPoints - aPoints; // puana göre sırala
+    return bAvg - aAvg; // eşit puanda averaja göre sırala
+  });
+
+  // Tabloyu renklendir
+  sorted.forEach((p, index) => {
     let s = stats[p];
     let AV = s.AG - s.YG;
     let P = s.G * 3 + s.B;
+    let rowClass = 'other'; // varsayılan renk
+
+    // İlk 4 sıradaki oyunculara renk ver
+    if (index === 0) rowClass = 'first';  // 1. oyuncu altın
+    else if (index === 1) rowClass = 'second'; // 2. oyuncu gümüş
+    else if (index === 2) rowClass = 'third'; // 3. oyuncu bronz
+    else if (index === 3) rowClass = 'fourth'; // 4. oyuncu açık gri
+
     tbody.innerHTML += `
-      <tr>
+      <tr class="${rowClass}">
         <td>${p}</td>
         <td>${s.O}</td>
         <td>${s.G}</td>
@@ -122,11 +154,9 @@ function submitScore() {
 
   history.push(`${p1} ${score1} - ${score2} ${p2}`);
 
-  // Temizle
   document.getElementById("score1").value = '';
   document.getElementById("score2").value = '';
 
-  // Yeni maç
   matchIndex = (matchIndex + 1) % matches.length;
   const next = matches[matchIndex];
   document.getElementById("currentMatch").innerText = `${next[0]} vs ${next[1]}`;
